@@ -80,12 +80,7 @@ pub(crate) fn sbc(r: &mut Registers, pins: &Pins) {
     }
 }
 
-pub(crate) fn dec_0(r: &mut Registers, pins: &mut Pins) {
-    r.ad.lo = pins.data;
-    pins.rw = false;
-}
-
-pub(crate) fn dec_1(r: &mut Registers, pins: &mut Pins) {
+pub(crate) fn dec(r: &mut Registers, pins: &mut Pins) {
     pins.data = r.p.set_zero_negative_flags(r.ad.lo.wrapping_sub(1) as i32);
     pins.rw = false;
 }
@@ -98,12 +93,7 @@ pub(crate) fn dey(r: &mut Registers) {
     r.y = r.p.set_zero_negative_flags(r.y as i32 - 1);
 }
 
-pub(crate) fn inc_0(r: &mut Registers, pins: &mut Pins) {
-    r.ad.lo = pins.data;
-    pins.rw = false;
-}
-
-pub(crate) fn inc_1(r: &mut Registers, pins: &mut Pins) {
+pub(crate) fn inc(r: &mut Registers, pins: &mut Pins) {
     pins.data = r.p.set_zero_negative_flags(r.ad.lo.wrapping_add(1) as i32);
     pins.rw = false;
 }

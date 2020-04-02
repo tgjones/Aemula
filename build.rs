@@ -466,8 +466,8 @@ impl InstructionCodeBuilder {
 
             // Read / modify / write memory
             "ASL" | "DEC" | "DCP" | "INC" | "ISB" | "LSR" | "RLA" | "ROL" | "ROR" | "RRA" | "SLO" | "SRE" => {
-                self.add_string(format!("{}_0(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
-                self.add_string(format!("{}_1(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
+                self.add("rmw_cycle(&mut self.registers, &mut pins);");
+                self.add_string(format!("{}(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
             },
 
             // Branch
