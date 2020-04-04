@@ -77,9 +77,11 @@ mod tests {
     use std::{env, fs, fs::File, io::Write, path::Path};
     use file_diff::diff;
 
+    const ASSET_PATH:&'static str = "test_assets/chips/mos6502";
+
     #[test]
     fn all_suite_a() {
-        let path = Path::new("test_assets").join("AllSuiteA.bin");
+        let path = Path::new(ASSET_PATH).join("AllSuiteA.bin");
         let rom = fs::read(path).unwrap();
 
         let mut ram = [0; 0x4000];
@@ -108,7 +110,7 @@ mod tests {
 
     #[test]
     fn dormann_functional_test() {
-        let path = Path::new("test_assets").join("6502_functional_test.bin");
+        let path = Path::new(ASSET_PATH).join("6502_functional_test.bin");
         let mut ram = fs::read(path).unwrap();
         assert_eq!(0x10000, ram.len());
 
@@ -134,7 +136,7 @@ mod tests {
 
     #[test]
     fn nes_test() -> Result<(), std::io::Error> {
-        let path = Path::new("test_assets").join("nestest.nes");
+        let path = Path::new(ASSET_PATH).join("nestest.nes");
         let mut cartridge_bytes = fs::read(path).unwrap();
         let rom = &mut cartridge_bytes[16..(16+0x4000)];
 
