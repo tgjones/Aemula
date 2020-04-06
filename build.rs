@@ -52,7 +52,7 @@ enum MemoryAccess {
 
 struct Instruction(u8, &'static str, AddressingMode, MemoryAccess);
 
-static INSTRUCTIONS: [Instruction; 239] = [
+static INSTRUCTIONS: [Instruction; 256] = [
     // Interrupt, jump, subroutine
     Instruction(0x00, "BRK", AddressingMode::None,             MemoryAccess::None),
     Instruction(0x20, "JSR", AddressingMode::JSR,              MemoryAccess::None),
@@ -110,6 +110,10 @@ static INSTRUCTIONS: [Instruction; 239] = [
     Instruction(0x79, "ADC", AddressingMode::AbsoluteY,        MemoryAccess::Read),
     Instruction(0x7D, "ADC", AddressingMode::AbsoluteX,        MemoryAccess::Read),
 
+    // ANC (undocumented)
+    Instruction(0x0B, "ANC", AddressingMode::Immediate,        MemoryAccess::None),
+    Instruction(0x2B, "ANC", AddressingMode::Immediate,        MemoryAccess::None),
+
     // AND
     Instruction(0x21, "AND", AddressingMode::IndexedIndirectX, MemoryAccess::Read),
     Instruction(0x25, "AND", AddressingMode::ZeroPage,         MemoryAccess::Read),
@@ -120,12 +124,21 @@ static INSTRUCTIONS: [Instruction; 239] = [
     Instruction(0x39, "AND", AddressingMode::AbsoluteY,        MemoryAccess::Read),
     Instruction(0x3D, "AND", AddressingMode::AbsoluteX,        MemoryAccess::Read),
 
+    // ANE (undocumented)
+    Instruction(0x8B, "ANE", AddressingMode::Immediate,        MemoryAccess::None),
+
     // ASL
     Instruction(0x06, "ASL", AddressingMode::ZeroPage,         MemoryAccess::ReadWrite),
     Instruction(0x16, "ASL", AddressingMode::ZeroPageX,        MemoryAccess::ReadWrite),
     Instruction(0x0A, "ASL", AddressingMode::Accumulator,      MemoryAccess::None),
     Instruction(0x0E, "ASL", AddressingMode::Absolute,         MemoryAccess::ReadWrite),
     Instruction(0x1E, "ASL", AddressingMode::AbsoluteX,        MemoryAccess::ReadWrite),
+
+    // ARR (undocumented, AND + ROR)
+    Instruction(0x6B, "ARR", AddressingMode::Immediate,        MemoryAccess::None),
+
+    // ASR (undocumented, aka ALR, AND + LSR)
+    Instruction(0x4B, "ASR", AddressingMode::Immediate,        MemoryAccess::None),
 
     // BIT
     Instruction(0x24, "BIT", AddressingMode::ZeroPage,         MemoryAccess::Read),
@@ -205,6 +218,9 @@ static INSTRUCTIONS: [Instruction; 239] = [
     Instruction(0xD2, "JAM", AddressingMode::Invalid,          MemoryAccess::None),
     Instruction(0xF2, "JAM", AddressingMode::Invalid,          MemoryAccess::None),
 
+    // LAS (undocumented)
+    Instruction(0xBB, "LAS", AddressingMode::AbsoluteY,        MemoryAccess::Read),
+
     // LAX (undocumented, LDA + LAX)
     Instruction(0xA3, "LAX", AddressingMode::IndexedIndirectX, MemoryAccess::Read),
     Instruction(0xA7, "LAX", AddressingMode::ZeroPage,         MemoryAccess::Read),
@@ -244,6 +260,9 @@ static INSTRUCTIONS: [Instruction; 239] = [
     Instruction(0x56, "LSR", AddressingMode::ZeroPageX,        MemoryAccess::ReadWrite),
     Instruction(0x5E, "LSR", AddressingMode::AbsoluteX,        MemoryAccess::ReadWrite),
 
+    // LXA (undocumented)
+    Instruction(0xAB, "LXA", AddressingMode::Immediate,        MemoryAccess::None),
+
     // NOP
     Instruction(0x04, "NOP", AddressingMode::ZeroPage,         MemoryAccess::Read),
     Instruction(0x0C, "NOP", AddressingMode::Absolute,         MemoryAccess::Read),
@@ -262,9 +281,13 @@ static INSTRUCTIONS: [Instruction; 239] = [
     Instruction(0x7A, "NOP", AddressingMode::None,             MemoryAccess::None),
     Instruction(0x7C, "NOP", AddressingMode::AbsoluteX,        MemoryAccess::Read),
     Instruction(0x80, "NOP", AddressingMode::Immediate,        MemoryAccess::None),
+    Instruction(0x82, "NOP", AddressingMode::Immediate,        MemoryAccess::None),
+    Instruction(0x89, "NOP", AddressingMode::Immediate,        MemoryAccess::None),
+    Instruction(0xC2, "NOP", AddressingMode::Immediate,        MemoryAccess::None),
     Instruction(0xD4, "NOP", AddressingMode::ZeroPageX,        MemoryAccess::Read),
     Instruction(0xDA, "NOP", AddressingMode::None,             MemoryAccess::None),
     Instruction(0xDC, "NOP", AddressingMode::AbsoluteX,        MemoryAccess::Read),
+    Instruction(0xE2, "NOP", AddressingMode::Immediate,        MemoryAccess::None),
     Instruction(0xEA, "NOP", AddressingMode::None,             MemoryAccess::None),
     Instruction(0xF4, "NOP", AddressingMode::ZeroPageX,        MemoryAccess::Read),
     Instruction(0xFA, "NOP", AddressingMode::None,             MemoryAccess::None),
@@ -328,6 +351,22 @@ static INSTRUCTIONS: [Instruction; 239] = [
     Instruction(0xF5, "SBC", AddressingMode::ZeroPageX,        MemoryAccess::Read),
     Instruction(0xF9, "SBC", AddressingMode::AbsoluteY,        MemoryAccess::Read),
     Instruction(0xFD, "SBC", AddressingMode::AbsoluteX,        MemoryAccess::Read),
+
+    // SBX (undocumented)
+    Instruction(0xCB, "SBX", AddressingMode::Immediate,        MemoryAccess::None),
+
+    // SHA (undocumented)
+    Instruction(0x93, "SHA", AddressingMode::IndirectIndexedY, MemoryAccess::Write),
+    Instruction(0x9F, "SHA", AddressingMode::AbsoluteY,        MemoryAccess::Write),
+
+    // SHS (undocumented)
+    Instruction(0x9B, "SHS", AddressingMode::AbsoluteY,        MemoryAccess::Write),
+
+    // SHX (undocumented)
+    Instruction(0x9E, "SHX", AddressingMode::AbsoluteY,        MemoryAccess::Write),
+
+    // SHY (undocumented)
+    Instruction(0x9C, "SHY", AddressingMode::AbsoluteX,        MemoryAccess::Write),
 
     // SLO (undocumented, ASL + ORA)
     Instruction(0x03, "SLO", AddressingMode::IndexedIndirectX, MemoryAccess::ReadWrite),
@@ -450,8 +489,12 @@ impl InstructionCodeBuilder {
             },
 
             // Write memory
-            "PHA" | "PHP" | "SAX" | "STA" | "STX" | "STY" => {
+            "PHA" | "PHP" | "SAX" | "SHS" | "STA" | "STX" | "STY" => {
                 self.modify_previous_string(format!("{}(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
+            },
+
+            "SHA" | "SHX" | "SHY" => {
+                self.modify_previous_string(format!("{}(&self.registers, &mut pins);", mnemonic.to_lowercase()));
             },
 
             // Read memory
@@ -475,6 +518,10 @@ impl InstructionCodeBuilder {
                 self.add_string(format!("branch_0_{}(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
                 self.add("branch_1(&mut self.registers, &mut pins);");
                 self.add("branch_2(&mut self.registers);");
+            },
+
+            "ANC" | "ANE" | "ARR" | "ASR" | "LAS" | "LXA" | "SBX" => {
+                self.add_string(format!("{}(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
             },
 
             // Invalid

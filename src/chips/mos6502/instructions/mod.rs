@@ -1,5 +1,4 @@
 mod arithmetic;
-mod bitwise;
 mod branch;
 mod common;
 mod compare;
@@ -15,7 +14,6 @@ mod transfer;
 mod unofficial;
 
 pub(crate) use arithmetic::*;
-pub(crate) use bitwise::*;
 pub(crate) use branch::*;
 pub(crate) use common::*;
 pub(crate) use compare::*;

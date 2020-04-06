@@ -9,3 +9,4 @@ bitflags = "1.2.1"
 
 [dev-dependencies]
 file_diff = "1.0.0"
+test-case = "1.0.0"

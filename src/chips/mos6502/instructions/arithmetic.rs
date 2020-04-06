@@ -14,7 +14,7 @@ fn do_adc_decimal(r: &mut Registers, value: u8) {
     let temp_1 = r.a.wrapping_add(value);
     let temp = if r.p.c { temp_1.wrapping_add(1) } else { temp_1 };
 
-    r.p.z = temp != 0;
+    r.p.z = temp == 0;
 
     let mut ah = 0;
     let mut al = (r.a & 0xF) + (value & 0xF) + (if r.p.c { 1 } else { 0 });
@@ -104,4 +104,36 @@ pub(crate) fn inx(r: &mut Registers) {
 
 pub(crate) fn iny(r: &mut Registers) {
     r.y = r.p.set_zero_negative_flags(r.y as i32 + 1);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case(false, 0, 1, false, 1, false, false, false, false)]
+    #[test_case(false, 0, 1, true, 2, false, false, false, false)]
+    #[test_case(false, 255, 1, false, 0, true, true, false, false)]
+    #[test_case(false, 127, 1, false, 128, false, false, true, true)]
+    #[test_case(true, 0, 0, false, 0, false, true, false, false)]
+    fn test_adc(bcd: bool, a: u8, addend: u8, c: bool, 
+                expected_a: u8, expected_c: bool, expected_z: bool,
+                expected_v: bool, expected_n: bool) {
+        let mut registers = Registers::new(true);
+        registers.p.d = bcd;
+        registers.p.c = c;
+        registers.a = a;
+
+        let mut pins = Pins::new();
+        pins.data = addend;
+
+        adc(&mut registers, &mut pins);
+
+        assert_eq!(expected_a, registers.a);
+
+        assert_eq!(expected_c, registers.p.c);
+        assert_eq!(expected_z, registers.p.z);
+        assert_eq!(expected_v, registers.p.v);
+        assert_eq!(expected_n, registers.p.n);
+    }
 }
