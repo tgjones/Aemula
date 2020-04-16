@@ -193,7 +193,7 @@ mod tests {
     use std::{fs, path::Path};
     use super::BBCMicro;
 
-    #[test]
+    //#[test]
     fn boot_rom() {
         let os_rom_path = Path::new("assets/systems/bbc_micro/roms/os.rom");
         let os_rom = fs::read(os_rom_path).unwrap();
