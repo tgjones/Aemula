@@ -10,6 +10,8 @@ pub struct Pins {
     pub nmi: bool,
     pub sync: bool,
     pub res: bool,
+
+    /// Read/write (read = true, write = false)
     pub rw: bool,
 }
 

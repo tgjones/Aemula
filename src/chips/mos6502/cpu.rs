@@ -10,7 +10,7 @@ pub struct MOS6502 {
 }
 
 pub struct MOS6502Options {
-    bcd_enabled: bool,
+    pub bcd_enabled: bool,
 }
 
 impl MOS6502 {
