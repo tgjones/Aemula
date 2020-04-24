@@ -54,7 +54,7 @@ mod tests {
     fn timer_test() {
         let mut system = Atari2600::new();
 
-        let timer_test_rom_path = Path::new("test_assets/systems/atari_2600/timer_test_v2_NTSC.rom");
+        let timer_test_rom_path = Path::new("test_assets/systems/atari_2600/timer_test_v2_NTSC.bin");
         let timer_test_rom = fs::read(timer_test_rom_path).unwrap();
         let timer_test_cartridge = Cartridge::new(timer_test_rom);
         system.insert_cartridge(timer_test_cartridge);
