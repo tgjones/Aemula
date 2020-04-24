@@ -1,4 +1,4 @@
-use crate::chips::{m6845, mos6502, saa5050};
+use crate::chips::{m6522, m6845, mos6502, saa5050};
 
 mod video_ula;
 
@@ -13,6 +13,9 @@ pub struct BBCMicro {
     video_ula: video_ula::VideoULA,
 
     teletext: saa5050::SAA5050,
+
+    // system_via: m6522::M6522,
+    // user_via: m6522::M6522,
     
     os_rom: Vec<u8>,
     basic_rom: Vec<u8>,
@@ -37,6 +40,9 @@ impl BBCMicro {
 
         let teletext = saa5050::SAA5050::new();
 
+        // let system_via = m6522::M6522::new();
+        // let user_via = m6522::M6522::new();
+
         Self {
             ram,
             cpu,
@@ -44,6 +50,8 @@ impl BBCMicro {
             crtc,
             video_ula,
             teletext,
+            // system_via,
+            // user_via,
             os_rom,
             basic_rom,
             clock_counter: 0,
@@ -203,7 +211,8 @@ mod tests {
 
         let mut bbc_micro = BBCMicro::new(os_rom, basic_rom);
 
-        loop {
+        // TODO: Don't fix loop count.
+        for _ in 0..1000000 {
             bbc_micro.tick();
         }
     }
