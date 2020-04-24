@@ -3,8 +3,7 @@ use aemula_macros::PinAccessors;
 #[derive(PinAccessors)]
 pub struct TIA {
     #[pin(in)]
-    #[handle(transition_lo_to_hi)]
-    #[handle(transition_hi_to_lo)]
+    #[handle(transition_lo_to_hi, transition_hi_to_lo)]
     osc: bool,
 
     #[pin(out)]
@@ -15,6 +14,14 @@ pub struct TIA {
 }
 
 impl TIA {
+    pub fn new() -> Self {
+        Self {
+            osc: false,
+            phi0: false,
+            phi0_clock_counter: 0,
+        }
+    }
+
     fn on_osc_transition_lo_to_hi(&mut self) {
 
     }

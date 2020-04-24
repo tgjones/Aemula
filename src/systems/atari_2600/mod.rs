@@ -1,29 +1,33 @@
-use crate::chips::{mos6502, m6532};
-
 mod cartridge;
 mod tia;
 
+use crate::chips::{mos6502::{MOS6502, MOS6502Options}, m6532::M6532};
+use cartridge::Cartridge;
+use tia::TIA;
+
 pub struct Atari2600 {
-    cpu: mos6502::MOS6502,
-    pia: m6532::M6532,
+    cpu: MOS6502,
+    pia: M6532,
+    tia: TIA,
     cartridge: Option<cartridge::Cartridge>,
 }
 
 impl Atari2600 {
     pub fn new() -> Self {
-        let cpu_options = mos6502::MOS6502Options {
+        let cpu_options = MOS6502Options {
             bcd_enabled: true
         };
-        let (cpu, pins) = mos6502::MOS6502::new_with_options(cpu_options);
+        let (cpu, pins) = MOS6502::new_with_options(cpu_options);
 
         Self {
             cpu,
-            pia: m6532::M6532::new(),
+            pia: M6532::new(),
+            tia: TIA::new(),
             cartridge: None,
         }
     }
 
-    pub fn insert_cartridge(&mut self, cartridge: cartridge::Cartridge) {
+    pub fn insert_cartridge(&mut self, cartridge: Cartridge) {
         self.cartridge = Some(cartridge);
     }
 
