@@ -5,6 +5,7 @@ authors = ["Tim Jones <tim@timjones.io>"]
 edition = "2018"
 
 [dependencies]
+aemula_macros = { path = "macros" }
 bitflags = "1.2.1"
 clipboard = "0.5"
 glium = "0.26"
