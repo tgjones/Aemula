@@ -203,7 +203,7 @@ mod tests {
         let os_rom_path = Path::new("assets/systems/bbc_micro/roms/os.rom");
         let os_rom = fs::read(os_rom_path).unwrap();
 
-        let basic_rom_path = Path::new("assets/systems/bbc_micro/roms/BASIC.rom");
+        let basic_rom_path = Path::new("assets/systems/bbc_micro/roms/basic.rom");
         let basic_rom = fs::read(basic_rom_path).unwrap();
 
         let mut bbc_micro = BBCMicro::new(os_rom, basic_rom);
