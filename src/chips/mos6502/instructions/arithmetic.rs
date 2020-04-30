@@ -1,109 +1,110 @@
-use super::super::pins::Pins;
-use super::super::registers::Registers;
+use super::super::MOS6502;
 
-fn do_adc_binary(r: &mut Registers, value: u8) {
-    let temp_1 = (r.a as u16).wrapping_add(value as u16);
-    let temp = if r.p.c { temp_1.wrapping_add(1) } else { temp_1 };
-    r.p.v = ((r.a as u16 ^ temp) & (value as u16 ^ temp) & 0x80) == 0x80;
-    r.p.c = temp > 0xFF;
-    r.a = temp as u8;
-    r.p.set_zero_negative_flags(r.a as i32);
-}
-
-fn do_adc_decimal(r: &mut Registers, value: u8) {
-    let temp_1 = r.a.wrapping_add(value);
-    let temp = if r.p.c { temp_1.wrapping_add(1) } else { temp_1 };
-
-    r.p.z = temp == 0;
-
-    let mut ah = 0;
-    let mut al = (r.a & 0xF) + (value & 0xF) + (if r.p.c { 1 } else { 0 });
-    if al > 9
-    {
-        al -= 10;
-        al &= 0xF;
-        ah = 1;
+impl MOS6502 {
+    fn do_adc_binary(&mut self, value: u8) {
+        let temp_1 = (self.a as u16).wrapping_add(value as u16);
+        let temp = if self.p.c { temp_1.wrapping_add(1) } else { temp_1 };
+        self.p.v = ((self.a as u16 ^ temp) & (value as u16 ^ temp) & 0x80) == 0x80;
+        self.p.c = temp > 0xFF;
+        self.a = temp as u8;
+        self.p.set_zero_negative_flags(self.a as i32);
     }
 
-    ah += (r.a >> 4) + (value >> 4);
-    r.p.n = (ah & 8) == 8;
-    r.p.v = ((r.a ^ value) & 0x80) == 0 && ((r.a ^ (ah << 4)) & 0x80) == 0x80;
-    r.p.c = false;
+    fn do_adc_decimal(&mut self, value: u8) {
+        let temp_1 = self.a.wrapping_add(value);
+        let temp = if self.p.c { temp_1.wrapping_add(1) } else { temp_1 };
 
-    if ah > 9
-    {
-        r.p.c = true;
-        ah -= 10;
-        ah &= 0xF;
+        self.p.z = temp == 0;
+
+        let mut ah = 0;
+        let mut al = (self.a & 0xF) + (value & 0xF) + (if self.p.c { 1 } else { 0 });
+        if al > 9
+        {
+            al -= 10;
+            al &= 0xF;
+            ah = 1;
+        }
+
+        ah += (self.a >> 4) + (value >> 4);
+        self.p.n = (ah & 8) == 8;
+        self.p.v = ((self.a ^ value) & 0x80) == 0 && ((self.a ^ (ah << 4)) & 0x80) == 0x80;
+        self.p.c = false;
+
+        if ah > 9
+        {
+            self.p.c = true;
+            ah -= 10;
+            ah &= 0xF;
+        }
+
+        self.a = (al & 0xF) | (ah << 4);
     }
 
-    r.a = (al & 0xF) | (ah << 4);
-}
-
-pub(crate) fn adc(r: &mut Registers, pins: &Pins) {
-    if !r.p.d || !r.bcd_enabled {
-        do_adc_binary(r, pins.data);
-    } else {
-        do_adc_decimal(r, pins.data);
-    }
-}
-
-fn do_sbc_decimal(r: &mut Registers, value: u8) {
-    let value_u32 = value as u32;
-    let carry = if r.p.c { 0 } else { 1 };
-    let mut al = ((r.a & 0xF) as u32).wrapping_sub(value_u32 & 0xF).wrapping_sub(carry);
-    let mut ah = ((r.a >> 4) as u32).wrapping_sub(value_u32 >> 4);
-
-    if (al & 0x10) == 0x10 {
-        al = (al - 6) & 0xF;
-        ah = ah.wrapping_sub(1);
+    pub(crate) fn adc(&mut self) {
+        if !self.p.d || !self.bcd_enabled {
+            self.do_adc_binary(self.data);
+        } else {
+            self.do_adc_decimal(self.data);
+        }
     }
 
-    if (ah & 0x10) == 0x10 {
-        ah = (ah - 6) & 0xF;
+    fn do_sbc_decimal(&mut self, value: u8) {
+        let value_u32 = value as u32;
+        let carry = if self.p.c { 0 } else { 1 };
+        let mut al = ((self.a & 0xF) as u32).wrapping_sub(value_u32 & 0xF).wrapping_sub(carry);
+        let mut ah = ((self.a >> 4) as u32).wrapping_sub(value_u32 >> 4);
+
+        if (al & 0x10) == 0x10 {
+            al = (al - 6) & 0xF;
+            ah = ah.wrapping_sub(1);
+        }
+
+        if (ah & 0x10) == 0x10 {
+            ah = (ah - 6) & 0xF;
+        }
+
+        let result = (self.a as u32).wrapping_sub(value_u32).wrapping_sub(carry);
+        self.p.n = (result & 0x80) == 0x80;
+        self.p.z = (result & 0xFF) == 0;
+        self.p.v = ((self.a as u32 ^ result) & (value_u32 ^ self.a as u32) & 0x80) == 0x80;
+        self.p.c = (result & 0x100) == 0;
+        self.a = (al | (ah << 4)) as u8;
     }
 
-    let result = (r.a as u32).wrapping_sub(value_u32).wrapping_sub(carry);
-    r.p.n = (result & 0x80) == 0x80;
-    r.p.z = (result & 0xFF) == 0;
-    r.p.v = ((r.a as u32 ^ result) & (value_u32 ^ r.a as u32) & 0x80) == 0x80;
-    r.p.c = (result & 0x100) == 0;
-    r.a = (al | (ah << 4)) as u8;
-}
-
-pub(crate) fn sbc(r: &mut Registers, pins: &Pins) {
-    if !r.p.d || !r.bcd_enabled {
-        let value = !pins.data;
-        do_adc_binary(r, value);
-    } else {
-        do_sbc_decimal(r, pins.data);
+    pub(crate) fn sbc(&mut self) {
+        if !self.p.d || !self.bcd_enabled {
+            let value = !self.data;
+            self.do_adc_binary(value);
+        } else {
+            self.do_sbc_decimal(self.data);
+        }
     }
-}
 
-pub(crate) fn dec(r: &mut Registers, pins: &mut Pins) {
-    pins.data = r.p.set_zero_negative_flags(r.ad.lo.wrapping_sub(1) as i32);
-    pins.rw = false;
-}
+    pub(crate) fn dec(&mut self) {
+        self.data = self.p.set_zero_negative_flags(self.ad.lo.wrapping_sub(1) as i32);
+        self.rw = false;
+    }
 
-pub(crate) fn dex(r: &mut Registers) {
-    r.x = r.p.set_zero_negative_flags(r.x as i32 - 1);
-}
+    pub(crate) fn dex(&mut self) {
+        self.x = self.p.set_zero_negative_flags(self.x as i32 - 1);
+    }
 
-pub(crate) fn dey(r: &mut Registers) {
-    r.y = r.p.set_zero_negative_flags(r.y as i32 - 1);
-}
+    pub(crate) fn dey(&mut self) {
+        self.y = self.p.set_zero_negative_flags(self.y as i32 - 1);
+    }
 
-pub(crate) fn inc(r: &mut Registers, pins: &mut Pins) {
-    pins.data = r.p.set_zero_negative_flags(r.ad.lo.wrapping_add(1) as i32);
-    pins.rw = false;
-}
+    pub(crate) fn inc(&mut self) {
+        self.data = self.p.set_zero_negative_flags(self.ad.lo.wrapping_add(1) as i32);
+        self.rw = false;
+    }
 
-pub(crate) fn inx(r: &mut Registers) {
-    r.x = r.p.set_zero_negative_flags(r.x as i32 + 1);
-}
+    pub(crate) fn inx(&mut self) {
+        self.x = self.p.set_zero_negative_flags(self.x as i32 + 1);
+    }
 
-pub(crate) fn iny(r: &mut Registers) {
-    r.y = r.p.set_zero_negative_flags(r.y as i32 + 1);
+    pub(crate) fn iny(&mut self) {
+        self.y = self.p.set_zero_negative_flags(self.y as i32 + 1);
+    }
 }
 
 #[cfg(test)]
@@ -119,21 +120,21 @@ mod tests {
     fn test_adc(bcd: bool, a: u8, addend: u8, c: bool, 
                 expected_a: u8, expected_c: bool, expected_z: bool,
                 expected_v: bool, expected_n: bool) {
-        let mut registers = Registers::new(true);
-        registers.p.d = bcd;
-        registers.p.c = c;
-        registers.a = a;
+        let mut cpu = MOS6502::new();
 
-        let mut pins = Pins::new();
-        pins.data = addend;
+        cpu.p.d = bcd;
+        cpu.p.c = c;
+        cpu.a = a;
 
-        adc(&mut registers, &mut pins);
+        cpu.data = addend;
 
-        assert_eq!(expected_a, registers.a);
+        cpu.adc();
 
-        assert_eq!(expected_c, registers.p.c);
-        assert_eq!(expected_z, registers.p.z);
-        assert_eq!(expected_v, registers.p.v);
-        assert_eq!(expected_n, registers.p.n);
+        assert_eq!(expected_a, cpu.a);
+
+        assert_eq!(expected_c, cpu.p.c);
+        assert_eq!(expected_z, cpu.p.z);
+        assert_eq!(expected_v, cpu.p.v);
+        assert_eq!(expected_n, cpu.p.n);
     }
 }

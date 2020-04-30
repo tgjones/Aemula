@@ -17,7 +17,7 @@ impl Atari2600 {
         let cpu_options = MOS6502Options {
             bcd_enabled: true
         };
-        let (cpu, pins) = MOS6502::new_with_options(cpu_options);
+        let cpu = MOS6502::new_with_options(cpu_options);
 
         Self {
             cpu,

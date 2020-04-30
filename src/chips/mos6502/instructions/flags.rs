@@ -1,29 +1,31 @@
-use super::super::registers::Registers;
+use super::super::MOS6502;
 
-pub(crate) fn clc(r: &mut Registers) {
-    r.p.c = false;
-}
+impl MOS6502 {
+    pub(crate) fn clc(&mut self) {
+        self.p.c = false;
+    }
 
-pub(crate) fn cld(r: &mut Registers) {
-    r.p.d = false;
-}
+    pub(crate) fn cld(&mut self) {
+        self.p.d = false;
+    }
 
-pub(crate) fn cli(r: &mut Registers) {
-    r.p.i = false;
-}
+    pub(crate) fn cli(&mut self) {
+        self.p.i = false;
+    }
 
-pub(crate) fn clv(r: &mut Registers) {
-    r.p.v = false;
-}
+    pub(crate) fn clv(&mut self) {
+        self.p.v = false;
+    }
 
-pub(crate) fn sed(r: &mut Registers) {
-    r.p.d = true;
-}
+    pub(crate) fn sed(&mut self) {
+        self.p.d = true;
+    }
 
-pub(crate) fn sei(r: &mut Registers) {
-    r.p.i = true;
-}
+    pub(crate) fn sei(&mut self) {
+        self.p.i = true;
+    }
 
-pub(crate) fn slc(r: &mut Registers) {
-    r.p.c = true;
+    pub(crate) fn slc(&mut self) {
+        self.p.c = true;
+    }
 }

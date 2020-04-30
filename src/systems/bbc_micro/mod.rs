@@ -6,7 +6,6 @@ pub struct BBCMicro {
     ram: [u8; 0x8000],
 
     cpu: mos6502::MOS6502,
-    cpu_pins: mos6502::Pins,
 
     crtc: m6845::M6845,
 
@@ -30,7 +29,7 @@ impl BBCMicro {
 
         let ram = [0; 0x8000];
 
-        let (cpu, cpu_pins) = mos6502::MOS6502::new_with_options(mos6502::MOS6502Options {
+        let cpu = mos6502::MOS6502::new_with_options(mos6502::MOS6502Options {
             bcd_enabled: true
         });
 
@@ -46,7 +45,6 @@ impl BBCMicro {
         Self {
             ram,
             cpu,
-            cpu_pins,
             crtc,
             video_ula,
             teletext,
@@ -107,7 +105,8 @@ impl BBCMicro {
         // Tick CPU and perform requested memory reads / writes.
         
         // TODO: 1MHz cycle stretching.
-        let mut cpu_pins = self.cpu.cycle(self.cpu_pins);
+        self.cpu.set_phi0(true);
+        self.cpu.set_phi0(false);
 
         // if cpu_pins.sync {
         //     println!("{:04X}  A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CPUC:{}", 
@@ -120,7 +119,7 @@ impl BBCMicro {
         //              self.cycles);
         // }
 
-        let address = cpu_pins.get_address();
+        let address = self.cpu.get_address();
 
         if self.clock_counter % 10000 == 0 {
             println!("Mode {}", self.ram[0x355]);
@@ -129,10 +128,10 @@ impl BBCMicro {
         match address {
             // RAM
             0x0000..=0x7FFF => {
-                if cpu_pins.rw {
-                    cpu_pins.data = self.ram[address as usize];
+                if self.cpu.rw {
+                    self.cpu.set_data(self.ram[address as usize]);
                 } else {
-                    self.ram[address as usize] = cpu_pins.data;
+                    self.ram[address as usize] = self.cpu.data();
                 }
             }
 
@@ -146,19 +145,19 @@ impl BBCMicro {
                     0x00..=0x07 => {
                         self.crtc.pins.cs = true;
                         self.crtc.pins.rs = (address & 1) == 1;
-                        self.crtc.pins.rw = cpu_pins.rw;
-                        self.crtc.pins.d = cpu_pins.data;
+                        self.crtc.pins.rw = self.cpu.rw;
+                        self.crtc.pins.d = self.cpu.data();
                         self.crtc.tick();
                         self.crtc.pins.cs = false;
-                        println!("CRTC rs {:05} d ${:02X} rw {}", self.crtc.pins.rs, cpu_pins.data, self.crtc.pins.rw);
+                        println!("CRTC rs {:05} d ${:02X} rw {}", self.crtc.pins.rs, self.cpu.data(), self.crtc.pins.rw);
                     }
 
                     // Video ULA
                     0x20..=0x2F => {
-                        if !cpu_pins.rw {
+                        if !self.cpu.rw {
                             self.video_ula.pins.cs = true;
                             self.video_ula.pins.a0 = (address & 1) == 1;
-                            self.video_ula.pins.data = cpu_pins.data;
+                            self.video_ula.pins.data = self.cpu.data();
                             self.video_ula.tick();
                             self.video_ula.pins.cs = false;
                             println!("Video ULA a0 {:05} d ${:02X}", self.video_ula.pins.a0, self.video_ula.pins.data);
@@ -173,15 +172,15 @@ impl BBCMicro {
 
             // Paged ROM
             0x8000..=0xBFFF => {
-                if cpu_pins.rw {
-                    cpu_pins.data = self.basic_rom[(address - 0x8000) as usize];
+                if self.cpu.rw {
+                    self.cpu.set_data(self.basic_rom[(address - 0x8000) as usize]);
                 }
             }
 
             // Operating System ROM
             0xC000..=0xFFFF => {
-                if cpu_pins.rw {
-                    cpu_pins.data = self.os_rom[(address - 0xC000) as usize];
+                if self.cpu.rw {
+                    self.cpu.set_data(self.os_rom[(address - 0xC000) as usize]);
                 }
             }
         }
@@ -191,8 +190,6 @@ impl BBCMicro {
         // } else {
         //     println!("WRITE     ${:04X} <= ${:02X}", address, cpu_pins.data);
         // }
-
-        self.cpu_pins = cpu_pins;
     }
 }
 

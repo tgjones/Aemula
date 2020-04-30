@@ -1,7 +1,8 @@
-use super::super::pins::Pins;
-use super::super::registers::Registers;
+use super::super::MOS6502;
 
-pub(crate) fn rmw_cycle(r: &mut Registers, pins: &mut Pins) {
-    r.ad.lo = pins.data;
-    pins.rw = false;
+impl MOS6502 {
+    pub(crate) fn rmw_cycle(&mut self) {
+        self.ad.lo = self.data;
+        self.rw = false;
+    }
 }

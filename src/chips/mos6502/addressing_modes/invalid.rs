@@ -1,13 +1,14 @@
-use super::super::pins::Pins;
-use super::super::registers::Registers;
+use super::super::MOS6502;
 
-pub(crate) fn addressing_mode_invalid_cycle_0(r: &mut Registers, pins: &mut Pins) {
-    pins.set_address(&r.pc);
-}
+impl MOS6502 {
+    pub(crate) fn addressing_mode_invalid_cycle_0(&mut self) {
+        self.set_address(self.pc);
+    }
 
-pub(crate) fn addressing_mode_invalid_cycle_1(r: &mut Registers, pins: &mut Pins) {
-    pins.address_hi = 0xFF;
-    pins.address_lo = 0xFF;
-    pins.data = 0xFF;
-    r.ir -= 1;
+    pub(crate) fn addressing_mode_invalid_cycle_1(&mut self) {
+        self.address_hi = 0xFF;
+        self.address_lo = 0xFF;
+        self.data = 0xFF;
+        self.ir -= 1;
+    }
 }

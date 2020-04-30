@@ -1,14 +1,15 @@
-use super::super::pins::Pins;
-use super::super::registers::Registers;
+use super::super::MOS6502;
 
-pub(crate) fn and(r: &mut Registers, pins: &Pins) {
-    r.a = r.p.set_zero_negative_flags((r.a & pins.data) as i32);
-}
+impl MOS6502 {
+    pub(crate) fn and(&mut self) {
+        self.a = self.p.set_zero_negative_flags((self.a & self.data) as i32);
+    }
 
-pub(crate) fn eor(r: &mut Registers, pins: &Pins) {
-    r.a = r.p.set_zero_negative_flags((r.a ^ pins.data) as i32);
-}
+    pub(crate) fn eor(&mut self) {
+        self.a = self.p.set_zero_negative_flags((self.a ^ self.data) as i32);
+    }
 
-pub(crate) fn ora(r: &mut Registers, pins: &Pins) {
-    r.a = r.p.set_zero_negative_flags((r.a | pins.data) as i32);
+    pub(crate) fn ora(&mut self) {
+        self.a = self.p.set_zero_negative_flags((self.a | self.data) as i32);
+    }
 }

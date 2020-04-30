@@ -1,19 +1,97 @@
-mod pins;
 mod registers;
 mod status_register;
 mod addressing_modes;
 mod instructions;
 
-pub use pins::Pins;
+use aemula_macros::PinAccessors;
 
-use self::registers::{BrkFlags, Registers};
+use self::registers::SplitRegister16;
+use self::status_register::StatusRegister;
 
 use self::addressing_modes::*;
 use self::instructions::*;
 
+bitflags! {
+    pub struct BrkFlags: u8 {
+        const NONE = 0;
+        const IRQ = 1;
+        const NMI = 2;
+        const RESET = 4;
+    }
+}
+
+#[derive(PinAccessors)]
 pub struct MOS6502 {
-    registers: Registers,
-    last_pins: Pins,
+    //////////////////////////////////////////
+    // Pins
+    //////////////////////////////////////////
+
+    pub address_lo: u8,
+    pub address_hi: u8,
+
+    #[pin(bidirectional)]
+    data: u8,
+
+    pub rdy: bool,
+    pub irq: bool,
+    pub nmi: bool,
+
+    #[pin(out)]
+    sync: bool,
+
+    pub res: bool,
+
+    #[pin(in)]
+    #[handle(transition_lo_to_hi, transition_hi_to_lo)]
+    phi0: bool,
+
+    /// When PHI1 is high, external devices can read from the address bus or data bus.
+    #[pin(out)]
+    phi1: bool,
+
+    /// When PHI2 is high, external devices can write to the data bus.
+    #[pin(out)]
+    phi2: bool,
+
+    /// Read/write (read = true, write = false)
+    pub rw: bool,
+
+    //////////////////////////////////////////
+    // Registers
+    //////////////////////////////////////////
+
+    /// Accumulator
+    pub a: u8,
+
+    /// X index register
+    pub x: u8,
+
+    /// Y index register
+    pub y: u8,
+
+    // Program counter
+    pub pc: SplitRegister16,
+
+    /// Stack pointer
+    pub sp: u8,
+
+    /// Processor status
+    pub p: StatusRegister,
+
+    /// Instruction register - stores opcode of instruction being executed.
+    ir: u8,
+
+    /// Timing register - stores the progress through the current instruction, from 0 to 7
+    tr: u8,
+
+    //////////////////////////////////////////
+    // Other internal storage
+    //////////////////////////////////////////
+
+    brk_flags: BrkFlags,
+    ad: SplitRegister16,
+
+    bcd_enabled: bool,
 }
 
 pub struct MOS6502Options {
@@ -21,60 +99,111 @@ pub struct MOS6502Options {
 }
 
 impl MOS6502 {
-    pub fn new() -> (MOS6502, Pins) {
+    pub fn new() -> Self {
         let options = MOS6502Options {
             bcd_enabled: true,
         };
         MOS6502::new_with_options(options)
     }
 
-    pub fn new_with_options(options: MOS6502Options) -> (MOS6502, Pins) {
-        let mut pins = Pins::new();
-        pins.sync = true;
-        pins.res = true;
-        pins.rw = true;
+    pub fn new_with_options(options: MOS6502Options) -> Self {
+        Self {
+            address_lo: 0,
+            address_hi: 0,
+            data: 0,
+            rdy: false,
+            irq: false,
+            nmi: false,
+            sync: true,
+            res: true,
+            rw: true,
 
-        let mos6502 = MOS6502 {
-            registers: Registers::new(options.bcd_enabled),
-            last_pins: pins
-        };
+            phi0: false,
+            phi1: false,
+            phi2: false,
 
-        (mos6502, pins)
+            a: 0,
+            x: 0,
+            y: 0,
+
+            pc: SplitRegister16::new(),
+
+            sp: 0,
+
+            p: StatusRegister::new(),
+
+            ir: 0, // Set to 0 to start with a BRK instruction
+            tr: 0,
+            brk_flags: BrkFlags::NONE,
+            ad: SplitRegister16::new(),
+
+            bcd_enabled: options.bcd_enabled,
+        }
     }
 
-    pub fn cycle(&mut self, mut pins: Pins) -> Pins {
+    pub fn get_address(&self) -> u16 {
+        u16::from_le_bytes([self.address_lo, self.address_hi])
+    }
+
+    pub fn set_address(&mut self, register: SplitRegister16) {
+        self.address_lo = register.lo;
+        self.address_hi = register.hi;
+    }
+
+    pub fn fetch_next_instruction(&mut self) {
+        self.set_address(self.pc);
+        self.sync = true;
+    }
+
+    // How this is actually supposed to work is:
+    // - PHI1 is when address lines change.
+    // - PHI2 is when the data is transferred.
+
+    fn on_phi0_transition_lo_to_hi(&mut self) {
+        // TODO: Write to the data bus.
+
+
+
+        self.phi2 = self.phi0;
+        self.phi1 = !self.phi0;
+    }
+
+    fn on_phi0_transition_hi_to_lo(&mut self) {
+        // TODO: Read previously requested data from bus.
+        // TODO: Put address onto the bus.
+        // TODO: Set RW pin.
+        // TODO: Set SYNC pin for an opcode fetch.
+
         // If SYNC pin is set, this is the start of a new instruction.
         // We will have the new opcode in the DATA pins.
-        if pins.sync {
-            self.registers.ir = pins.data;
-            self.registers.tr = 0;
-            pins.sync = false;
+        if self.sync {
+            self.ir = self.data;
+            self.tr = 0;
+            self.sync = false;
 
-            if pins.res {
-                self.registers.brk_flags = BrkFlags::RESET;
+            if self.res {
+                self.brk_flags = BrkFlags::RESET;
             }
 
-            if self.registers.brk_flags != BrkFlags::NONE {
-                self.registers.ir = 0;
-                pins.res = false;
+            if self.brk_flags != BrkFlags::NONE {
+                self.ir = 0;
+                self.res = false;
             } else {
-                self.registers.pc = self.registers.pc.wrapping_add(1);
+                self.pc = self.pc.wrapping_add(1);
             }
         }
 
         // Assume we're going to read.
-        pins.rw = true;
+        self.rw = true;
 
         // Include generated file with actual instruction implementations.
         include!(concat!(env!("OUT_DIR"), "/mos6502_instructions.generated.rs"));
 
         // Increment timing register.
-        self.registers.tr += 1;
+        self.tr += 1;
 
-        // Store pins state.
-        self.last_pins = pins;
-
-        pins
+        self.phi2 = self.phi0;
+        self.phi1 = !self.phi0;
     }
 }
 
@@ -93,20 +222,22 @@ mod tests {
 
         let mut ram = [0; 0x4000];
 
-        let (mut cpu, mut pins) = MOS6502::new();
+        let mut cpu = MOS6502::new();
 
-        while cpu.registers.pc.to_u16() != 0x45C2 {
-            pins = cpu.cycle(pins);
-            let address = pins.get_address();
+        while cpu.pc.to_u16() != 0x45C2 {
+            cpu.set_phi0(true);
+            cpu.set_phi0(false);
 
-            if pins.rw {
-                pins.data = match address {
+            let address = cpu.get_address();
+
+            if cpu.rw {
+                cpu.data = match address {
                     0x0000..=0x3FFF => ram[address as usize],
                     0x4000..=0xFFFF => rom[(address - 0x4000) as usize],
                 }
             } else {
                 match address {
-                    0x0000..=0x3FFF => ram[address as usize] = pins.data,
+                    0x0000..=0x3FFF => ram[address as usize] = cpu.data,
                     _ => {},
                 }
             }
@@ -125,20 +256,22 @@ mod tests {
         ram[0xFFFC] = 0x00;
         ram[0xFFFD] = 0x04;
 
-        let (mut cpu, mut pins) = MOS6502::new();
+        let mut cpu = MOS6502::new();
 
-        while cpu.registers.pc.to_u16() != 0x3399 && cpu.registers.pc.to_u16() != 0xD0FE {
-            pins = cpu.cycle(pins);
-            let address = pins.get_address();
+        while cpu.pc.to_u16() != 0x3399 && cpu.pc.to_u16() != 0xD0FE {
+            cpu.set_phi0(true);
+            cpu.set_phi0(false);
 
-            if pins.rw {
-                pins.data = ram[address as usize];
+            let address = cpu.get_address();
+
+            if cpu.rw {
+                cpu.data = ram[address as usize];
             } else {
-                ram[address as usize] = pins.data;
+                ram[address as usize] = cpu.data;
             }
         }
 
-        assert_eq!(0x3399, cpu.registers.pc.to_u16());
+        assert_eq!(0x3399, cpu.pc.to_u16());
     }
 
     #[test]
@@ -159,15 +292,16 @@ mod tests {
         let options = MOS6502Options {
             bcd_enabled: false,
         };
-        let (mut cpu, mut pins) = MOS6502::new_with_options(options);
+        let mut cpu = MOS6502::new_with_options(options);
 
         let test_log_path = env::temp_dir().join("nestest_aemula.log");
         let mut test_log_buffer = File::create(&test_log_path)?;
 
         let mut cycles = 0;
         let mut should_log = false;
-        while cpu.registers.pc.to_u16() != 0xC66E {
-            pins = cpu.cycle(pins);
+        while cpu.pc.to_u16() != 0xC66E {
+            cpu.set_phi0(true);
+            cpu.set_phi0(false);
 
             cycles += 1;
 
@@ -175,41 +309,41 @@ mod tests {
                 should_log = true;
             }
 
-            if should_log && pins.sync {
+            if should_log && cpu.sync {
                 write!(test_log_buffer,
                     "{:04X}  A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CPUC:{}\n", 
-                    cpu.registers.pc.to_u16(),
-                    cpu.registers.a,
-                    cpu.registers.x,
-                    cpu.registers.y,
-                    cpu.registers.p.as_u8(false),
-                    cpu.registers.sp,
+                    cpu.pc.to_u16(),
+                    cpu.a,
+                    cpu.x,
+                    cpu.y,
+                    cpu.p.as_u8(false),
+                    cpu.sp,
                     cycles - 7)?;
             }
 
-            let address = pins.get_address();
+            let address = cpu.get_address();
 
             if should_log {
                 write!(test_log_buffer, "      ")?;
             }
-            if pins.rw {
-                pins.data = match address {
+            if cpu.rw {
+                cpu.data = match address {
                     0x0000..=0x1FFF => ram[(address & 0x07FF) as usize],
                     0x4000..=0x4017 => apu[(address - 0x4000) as usize],
                     0x8000..=0xFFFF => rom[((address - 0x8000) & 0x3FFF) as usize],
                     _ => 0,
                 };
                 if should_log {
-                    write!(test_log_buffer, "READ      ${:04X} => ${:02X}\n", address, pins.data)?;
+                    write!(test_log_buffer, "READ      ${:04X} => ${:02X}\n", address, cpu.data)?;
                 }
             } else {
                 match address {
-                    0x0000..=0x1FFF => ram[(address & 0x07FF) as usize] = pins.data,
-                    0x4000..=0x4017 => apu[(address - 0x4000) as usize] = pins.data,
+                    0x0000..=0x1FFF => ram[(address & 0x07FF) as usize] = cpu.data,
+                    0x4000..=0x4017 => apu[(address - 0x4000) as usize] = cpu.data,
                     _ => {},
                 }
                 if should_log {
-                    write!(test_log_buffer, "WRITE     ${:04X} <= ${:02X}\n", address, pins.data)?;
+                    write!(test_log_buffer, "WRITE     ${:04X} <= ${:02X}\n", address, cpu.data)?;
                 }
             }
         }
@@ -288,8 +422,8 @@ mod tests {
             ram[0xFFE6] = 0x60; // RTS
 
             // Initialize registers.
-            cpu.registers.sp = 0xFD;
-            cpu.registers.p.i = true;
+            cpu.sp = 0xFD;
+            cpu.p.i = true;
             
             // Initialize RESET vector.
             ram[0xFFFC] = 0x01;
@@ -301,21 +435,23 @@ mod tests {
         let mut test_filename = " start".to_string();
 
         loop {
-            let (mut cpu, mut pins) = MOS6502::new();
+            let mut cpu = MOS6502::new();
             setup_test(&test_filename, &mut ram, &mut cpu);
 
             loop {
-                pins = cpu.cycle(pins);
-                let address = pins.get_address();
+                cpu.set_phi0(true);
+                cpu.set_phi0(false);
 
-                if pins.rw {
+                let address = cpu.get_address();
+
+                if cpu.rw {
                     match address {
                         0xFFD2 => { // Print character
-                            if cpu.registers.a == 13 {
+                            if cpu.a == 13 {
                                 println!("{}", log);
                                 log.clear();
                             } else {
-                                log += &petscii_to_ascii(cpu.registers.a);
+                                log += &petscii_to_ascii(cpu.a);
                             }
                             ram[0x030C] = 0x00;
                         },
@@ -338,9 +474,9 @@ mod tests {
                         },
                         _ => {}
                     }
-                    pins.data = ram[address as usize];
+                    cpu.data = ram[address as usize];
                 } else {
-                    ram[address as usize] = pins.data;
+                    ram[address as usize] = cpu.data;
                 }
             }
         }

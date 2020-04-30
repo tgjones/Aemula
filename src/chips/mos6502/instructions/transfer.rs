@@ -1,25 +1,27 @@
-use super::super::registers::Registers;
+use super::super::MOS6502;
 
-pub(crate) fn tax(r: &mut Registers) {
-    r.x = r.p.set_zero_negative_flags(r.a as i32);
-}
+impl MOS6502 {
+    pub(crate) fn tax(&mut self) {
+        self.x = self.p.set_zero_negative_flags(self.a as i32);
+    }
 
-pub(crate) fn tay(r: &mut Registers) {
-    r.y = r.p.set_zero_negative_flags(r.a as i32);
-}
+    pub(crate) fn tay(&mut self) {
+        self.y = self.p.set_zero_negative_flags(self.a as i32);
+    }
 
-pub(crate) fn tsx(r: &mut Registers) {
-    r.x = r.p.set_zero_negative_flags(r.sp as i32);
-}
+    pub(crate) fn tsx(&mut self) {
+        self.x = self.p.set_zero_negative_flags(self.sp as i32);
+    }
 
-pub(crate) fn txa(r: &mut Registers) {
-    r.a = r.p.set_zero_negative_flags(r.x as i32);
-}
+    pub(crate) fn txa(&mut self) {
+        self.a = self.p.set_zero_negative_flags(self.x as i32);
+    }
 
-pub(crate) fn txs(r: &mut Registers) {
-    r.sp = r.x;
-}
+    pub(crate) fn txs(&mut self) {
+        self.sp = self.x;
+    }
 
-pub(crate) fn tya(r: &mut Registers) {
-    r.a = r.p.set_zero_negative_flags(r.y as i32);
+    pub(crate) fn tya(&mut self) {
+        self.a = self.p.set_zero_negative_flags(self.y as i32);
+    }
 }

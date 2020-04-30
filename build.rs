@@ -442,86 +442,78 @@ impl InstructionCodeBuilder {
         match mnemonic {
             // Special cases
             "BRK" => {
-                self.add("brk_0(&mut self.registers, &mut pins);");
-                self.add("brk_1(&mut self.registers, &mut pins);");
-                self.add("brk_2(&mut self.registers, &mut pins);");
-                self.add("brk_3(&mut self.registers, &mut pins);");
-                self.add("brk_4(&mut self.registers, &mut pins);");
-                self.add("brk_5(&mut self.registers, &mut pins);");
+                self.add("self.brk_0();");
+                self.add("self.brk_1();");
+                self.add("self.brk_2();");
+                self.add("self.brk_3();");
+                self.add("self.brk_4();");
+                self.add("self.brk_5();");
             },
-            "JMP" => self.modify_previous("jmp(&mut self.registers, &pins);"),
+            "JMP" => self.modify_previous("self.jmp();"),
             "JSR" => {
-                self.add("jsr_0(&mut self.registers, &mut pins);");
-                self.add("jsr_1(&mut self.registers, &mut pins);");
-                self.add("jsr_2(&mut self.registers, &mut pins);");
-                self.add("jsr_3(&mut self.registers, &mut pins);");
-                self.add("jsr_4(&mut self.registers, &mut pins);");
-                self.add("jsr_5(&mut self.registers, &mut pins);");
+                self.add("self.jsr_0();");
+                self.add("self.jsr_1();");
+                self.add("self.jsr_2();");
+                self.add("self.jsr_3();");
+                self.add("self.jsr_4();");
+                self.add("self.jsr_5();");
             },
             "PLA" => {
-                self.add("pla_0(&mut self.registers, &mut pins);");
-                self.add("pla_1(&mut self.registers, &mut pins);");
-                self.add("pla_2(&mut self.registers, &mut pins);");
+                self.add("self.pla_0();");
+                self.add("self.pla_1();");
+                self.add("self.pla_2();");
             },
             "PLP" => {
-                self.add("plp_0(&mut self.registers, &mut pins);");
-                self.add("plp_1(&mut self.registers, &mut pins);");
-                self.add("plp_2(&mut self.registers, &mut pins);");
+                self.add("self.plp_0();");
+                self.add("self.plp_1();");
+                self.add("self.plp_2();");
             },
             "RTI" => {
-                self.add("rti_0(&mut self.registers, &mut pins);");
-                self.add("rti_1(&mut self.registers, &mut pins);");
-                self.add("rti_2(&mut self.registers, &mut pins);");
-                self.add("rti_3(&mut self.registers, &mut pins);");
-                self.add("rti_4(&mut self.registers, &mut pins);");
+                self.add("self.rti_0();");
+                self.add("self.rti_1();");
+                self.add("self.rti_2();");
+                self.add("self.rti_3();");
+                self.add("self.rti_4();");
             },
             "RTS" => {
-                self.add("rts_0(&mut self.registers, &mut pins);");
-                self.add("rts_1(&mut self.registers, &mut pins);");
-                self.add("rts_2(&mut self.registers, &mut pins);");
-                self.add("rts_3(&mut self.registers, &mut pins);");
+                self.add("self.rts_0();");
+                self.add("self.rts_1();");
+                self.add("self.rts_2();");
+                self.add("self.rts_3();");
                 self.add("");
             },
             "CLC" | "CLD" | "CLI" | "CLV" | "SED" | "SEI" | "SLC" |
             "DEX" | "DEY" | "INX" | "INY" | 
             "TAX" | "TAY" | "TSX" | "TXA" | "TXS" | "TYA" => {
-                self.add_string(format!("{}(&mut self.registers);", mnemonic.to_lowercase()))
+                self.add_string(format!("self.{}();", mnemonic.to_lowercase()))
             },
 
             // Write memory
-            "PHA" | "PHP" | "SAX" | "SHS" | "STA" | "STX" | "STY" => {
-                self.modify_previous_string(format!("{}(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
+            "PHA" | "PHP" | "SAX" | "SHA" | "SHX" | "SHY" | "SHS" | "STA" | "STX" | "STY" => {
+                self.modify_previous_string(format!("self.{}();", mnemonic.to_lowercase()));
             },
 
-            "SHA" | "SHX" | "SHY" => {
-                self.modify_previous_string(format!("{}(&self.registers, &mut pins);", mnemonic.to_lowercase()));
-            },
-
-            // Read memory
-            "ADC" | "AND" | "BIT" | "CMP" | "CPX" | "CPY" | "EOR" | "LAX" | "LDA" | "LDX" | "LDY" | "ORA" | "SBC" => {
-                self.add_string(format!("{}(&mut self.registers, &pins);", mnemonic.to_lowercase()))
+            "ADC" | "AND" | "BIT" | "CMP" | "CPX" | "CPY" | "EOR" | "LAX" | "LDA" | "LDX" | "LDY" | "ORA" | "SBC" |
+            "ANC" | "ANE" | "ARR" | "ASR" | "LAS" | "LXA" | "SBX" => {
+                self.add_string(format!("self.{}();", mnemonic.to_lowercase()))
             },
 
             // Accumulator
             "ASL" | "LSR" | "ROL" | "ROR" if addressing_mode == &AddressingMode::Accumulator => {
-                self.add_string(format!("{}a(&mut self.registers);", mnemonic.to_lowercase()));
+                self.add_string(format!("self.{}a();", mnemonic.to_lowercase()));
             },
 
             // Read / modify / write memory
             "ASL" | "DEC" | "DCP" | "INC" | "ISB" | "LSR" | "RLA" | "ROL" | "ROR" | "RRA" | "SLO" | "SRE" => {
-                self.add("rmw_cycle(&mut self.registers, &mut pins);");
-                self.add_string(format!("{}(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
+                self.add("self.rmw_cycle();");
+                self.add_string(format!("self.{}();", mnemonic.to_lowercase()));
             },
 
             // Branch
             "BCC" | "BCS" | "BEQ" | "BMI" | "BNE" | "BPL" | "BVC" | "BVS" => {
-                self.add_string(format!("branch_0_{}(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
-                self.add("branch_1(&mut self.registers, &mut pins);");
-                self.add("branch_2(&mut self.registers);");
-            },
-
-            "ANC" | "ANE" | "ARR" | "ASR" | "LAS" | "LXA" | "SBX" => {
-                self.add_string(format!("{}(&mut self.registers, &mut pins);", mnemonic.to_lowercase()));
+                self.add_string(format!("self.branch_0_{}();", mnemonic.to_lowercase()));
+                self.add("self.branch_1();");
+                self.add("self.branch_2();");
             },
 
             // Invalid
@@ -536,76 +528,76 @@ impl InstructionCodeBuilder {
     fn encode_addressing_mode(&mut self, instruction: &Instruction) {
         match instruction.2 {
             AddressingMode::None | AddressingMode::Accumulator => {
-                self.add("addressing_mode_none_cycle_0(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_none_cycle_0();");
             },
             AddressingMode::Immediate => {
-                self.add("addressing_mode_immediate_cycle_0(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_immediate_cycle_0();");
             },
             AddressingMode::ZeroPage => {
-                self.add("addressing_mode_zero_page_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_zero_page_cycle_1(&mut pins);");
+                self.add("self.addressing_mode_zero_page_cycle_0();");
+                self.add("self.addressing_mode_zero_page_cycle_1();");
             },
             AddressingMode::ZeroPageX => {
-                self.add("addressing_mode_zero_page_indexed_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_zero_page_indexed_cycle_1(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_zero_page_x_cycle_2(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_zero_page_indexed_cycle_0();");
+                self.add("self.addressing_mode_zero_page_indexed_cycle_1();");
+                self.add("self.addressing_mode_zero_page_x_cycle_2();");
             },
             AddressingMode::ZeroPageY => {
-                self.add("addressing_mode_zero_page_indexed_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_zero_page_indexed_cycle_1(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_zero_page_y_cycle_2(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_zero_page_indexed_cycle_0();");
+                self.add("self.addressing_mode_zero_page_indexed_cycle_1();");
+                self.add("self.addressing_mode_zero_page_y_cycle_2();");
             },
             AddressingMode::Absolute => {
-                self.add("addressing_mode_absolute_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_absolute_cycle_1(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_absolute_cycle_2(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_absolute_cycle_0();");
+                self.add("self.addressing_mode_absolute_cycle_1();");
+                self.add("self.addressing_mode_absolute_cycle_2();");
             },
             AddressingMode::AbsoluteX => {
-                self.add("addressing_mode_absolute_indexed_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_absolute_indexed_cycle_1(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_absolute_indexed_cycle_2(self.registers.x, &mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_absolute_indexed_cycle_0();");
+                self.add("self.addressing_mode_absolute_indexed_cycle_1();");
+                self.add("self.addressing_mode_absolute_indexed_cycle_2(self.x);");
                 if instruction.3 == MemoryAccess::Read {
-                    self.modify_previous("addressing_mode_absolute_indexed_cycle_2_read(self.registers.x, &mut self.registers);");
+                    self.modify_previous("self.addressing_mode_absolute_indexed_cycle_2_read(self.x);");
                 }
-                self.add("addressing_mode_absolute_indexed_cycle_3(self.registers.x, &mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_absolute_indexed_cycle_3(self.x);");
             },
             AddressingMode::AbsoluteY => {
-                self.add("addressing_mode_absolute_indexed_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_absolute_indexed_cycle_1(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_absolute_indexed_cycle_2(self.registers.y, &mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_absolute_indexed_cycle_0();");
+                self.add("self.addressing_mode_absolute_indexed_cycle_1();");
+                self.add("self.addressing_mode_absolute_indexed_cycle_2(self.y);");
                 if instruction.3 == MemoryAccess::Read {
-                    self.modify_previous("addressing_mode_absolute_indexed_cycle_2_read(self.registers.y, &mut self.registers);");
+                    self.modify_previous("self.addressing_mode_absolute_indexed_cycle_2_read(self.y);");
                 }
-                self.add("addressing_mode_absolute_indexed_cycle_3(self.registers.y, &mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_absolute_indexed_cycle_3(self.y);");
             },
             AddressingMode::IndexedIndirectX => {
-                self.add("addressing_mode_indexed_indirect_x_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indexed_indirect_x_cycle_1(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indexed_indirect_x_cycle_2(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indexed_indirect_x_cycle_3(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indexed_indirect_x_cycle_4(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_indexed_indirect_x_cycle_0();");
+                self.add("self.addressing_mode_indexed_indirect_x_cycle_1();");
+                self.add("self.addressing_mode_indexed_indirect_x_cycle_2();");
+                self.add("self.addressing_mode_indexed_indirect_x_cycle_3();");
+                self.add("self.addressing_mode_indexed_indirect_x_cycle_4();");
             },
             AddressingMode::IndirectIndexedY => {
-                self.add("addressing_mode_indirect_indexed_y_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indirect_indexed_y_cycle_1(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indirect_indexed_y_cycle_2(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indirect_indexed_y_cycle_3(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_indirect_indexed_y_cycle_0();");
+                self.add("self.addressing_mode_indirect_indexed_y_cycle_1();");
+                self.add("self.addressing_mode_indirect_indexed_y_cycle_2();");
+                self.add("self.addressing_mode_indirect_indexed_y_cycle_3();");
                 if instruction.3 == MemoryAccess::Read {
-                    self.modify_previous("addressing_mode_indirect_indexed_y_cycle_3_read(&mut self.registers);");
+                    self.modify_previous("self.addressing_mode_indirect_indexed_y_cycle_3_read();");
                 }
-                self.add("addressing_mode_indirect_indexed_y_cycle_4(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_indirect_indexed_y_cycle_4();");
             },
             AddressingMode::Indirect => {
-                self.add("addressing_mode_indirect_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indirect_cycle_1(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indirect_cycle_2(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indirect_cycle_3(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_indirect_cycle_4(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_indirect_cycle_0();");
+                self.add("self.addressing_mode_indirect_cycle_1();");
+                self.add("self.addressing_mode_indirect_cycle_2();");
+                self.add("self.addressing_mode_indirect_cycle_3();");
+                self.add("self.addressing_mode_indirect_cycle_4();");
             },
             AddressingMode::JSR => (),
             AddressingMode::Invalid => {
-                self.add("addressing_mode_invalid_cycle_0(&mut self.registers, &mut pins);");
-                self.add("addressing_mode_invalid_cycle_1(&mut self.registers, &mut pins);");
+                self.add("self.addressing_mode_invalid_cycle_0();");
+                self.add("self.addressing_mode_invalid_cycle_1();");
             },
         }
     }
@@ -626,8 +618,8 @@ impl InstructionCode {
         code_builder.encode_operation(instruction.1, &instruction.2);
     
         match instruction.3 {
-            MemoryAccess::None | MemoryAccess::Read => code_builder.modify_previous("pins.fetch_next_instruction(&self.registers);"),
-            _ => code_builder.add("pins.fetch_next_instruction(&self.registers);"),
+            MemoryAccess::None | MemoryAccess::Read => code_builder.modify_previous("self.fetch_next_instruction();"),
+            _ => code_builder.add("self.fetch_next_instruction();"),
         }
     
         InstructionCode {
@@ -644,7 +636,7 @@ fn main() -> Result<(), std::io::Error> {
 
     write!(buffer, "// This is a generated file. Do not modify.\n")?;
     write!(buffer, "\n")?;
-    write!(buffer, "match (self.registers.ir, self.registers.tr) {{\n")?;
+    write!(buffer, "match (self.ir, self.tr) {{\n")?;
 
     for instruction in INSTRUCTIONS.iter() {
         let instruction_code = InstructionCode::from_instruction(instruction);
@@ -660,7 +652,7 @@ fn main() -> Result<(), std::io::Error> {
         write!(buffer, "\n")?;
     }
 
-    write!(buffer, "    _ => todo!(\"Unimplemented opcode 0x{{:02X}} timing {{}}\", self.registers.ir, self.registers.tr)")?;
+    write!(buffer, "    _ => todo!(\"Unimplemented opcode 0x{{:02X}} timing {{}}\", self.ir, self.tr)")?;
 
     write!(buffer, "}}\n")?;
 

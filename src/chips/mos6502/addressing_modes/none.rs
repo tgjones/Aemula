@@ -1,6 +1,7 @@
-use super::super::pins::Pins;
-use super::super::registers::Registers;
+use super::super::MOS6502;
 
-pub(crate) fn addressing_mode_none_cycle_0(r: &mut Registers, pins: &mut Pins) {
-    pins.set_address(&r.pc);
+impl MOS6502 {
+    pub(crate) fn addressing_mode_none_cycle_0(&mut self) {
+        self.set_address(self.pc);
+    }
 }

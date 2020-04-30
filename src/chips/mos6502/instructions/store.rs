@@ -1,22 +1,23 @@
-use super::super::pins::Pins;
-use super::super::registers::Registers;
+use super::super::MOS6502;
 
-pub(crate) fn sax(r: &mut Registers, pins: &mut Pins) {
-    pins.data = r.a & r.x;
-    pins.rw = false;
-}
+impl MOS6502 {
+    pub(crate) fn sax(&mut self) {
+        self.data = self.a & self.x;
+        self.rw = false;
+    }
 
-pub(crate) fn sta(r: &mut Registers, pins: &mut Pins) {
-    pins.data = r.a;
-    pins.rw = false;
-}
+    pub(crate) fn sta(&mut self) {
+        self.data = self.a;
+        self.rw = false;
+    }
 
-pub(crate) fn stx(r: &mut Registers, pins: &mut Pins) {
-    pins.data = r.x;
-    pins.rw = false;
-}
+    pub(crate) fn stx(&mut self) {
+        self.data = self.x;
+        self.rw = false;
+    }
 
-pub(crate) fn sty(r: &mut Registers, pins: &mut Pins) {
-    pins.data = r.y;
-    pins.rw = false;
+    pub(crate) fn sty(&mut self) {
+        self.data = self.y;
+        self.rw = false;
+    }
 }
