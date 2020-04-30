@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use proc_macro_error::{abort, abort_call_site, ResultExt};
 use quote::quote;
-use syn::{self, parse_macro_input, spanned::Spanned, DataStruct, DeriveInput, Field, Lit, Meta, MetaNameValue, Visibility};
+use syn::{self, parse_macro_input, spanned::Spanned, DataStruct, DeriveInput, Field, Meta};
 
 #[proc_macro_derive(PinAccessors, attributes(pin, handle))]
 pub fn derive_pin_accessors(input: TokenStream) -> TokenStream {

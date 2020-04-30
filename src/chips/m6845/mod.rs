@@ -88,8 +88,8 @@ pub struct Pins {
     /// Character clock
     pub clk: bool,
 
-    /// Light pen strobe
-    lpstb: bool,
+    // /// Light pen strobe
+    // lpstb: bool,
 }
 
 impl Pins {
@@ -109,7 +109,7 @@ impl Pins {
 
             cursor: false,
             clk: false,
-            lpstb: false,
+            //lpstb: false,
         }
     }
 }

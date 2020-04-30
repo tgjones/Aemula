@@ -65,6 +65,6 @@ impl SAA5050 {
         }
 
         // Lookup character.
-
+        let _ = rom::CHARACTERS[0]; // TODO
     }
 }

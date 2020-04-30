@@ -8,9 +8,6 @@ use aemula_macros::PinAccessors;
 use self::registers::SplitRegister16;
 use self::status_register::StatusRegister;
 
-use self::addressing_modes::*;
-use self::instructions::*;
-
 bitflags! {
     pub struct BrkFlags: u8 {
         const NONE = 0;

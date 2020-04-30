@@ -1,7 +1,5 @@
 use super::super::MOS6502;
 
-use super::*;
-
 impl MOS6502 {
     pub(crate) fn anc(&mut self) {
         self.a &= self.data;
