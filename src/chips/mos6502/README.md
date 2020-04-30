@@ -18,6 +18,8 @@
 ## Other implementations
 
 * [EDL](https://github.com/SavourySnaX/EDL/blob/master/chips/Accurate/m6502.edl)
+* [Chips](https://github.com/floooh/chips/blob/master/chips/m6502.h)
+  * [Andre Weissflog's blog post about his cycle-stepped 6502 emulator](https://floooh.github.io/2019/12/13/cycle-stepped-6502.html) has been very helpful.
 
 ## Clock
 
