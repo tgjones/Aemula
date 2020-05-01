@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     fn branch_0(&mut self, flag: bool, value: bool) {
         self.set_address(self.pc);
         self.ad = self.pc.wrapping_add_i8(self.data as i8);

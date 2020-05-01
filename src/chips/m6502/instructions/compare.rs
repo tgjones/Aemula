@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     pub(crate) fn bit(&mut self) {
         let value = self.data;
         self.p.z = (self.a & value) == 0;

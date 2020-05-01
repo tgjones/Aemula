@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     pub(crate) fn sax(&mut self) {
         self.data = self.a & self.x;
         self.rw = false;

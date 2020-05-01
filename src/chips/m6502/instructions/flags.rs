@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     pub(crate) fn clc(&mut self) {
         self.p.c = false;
     }

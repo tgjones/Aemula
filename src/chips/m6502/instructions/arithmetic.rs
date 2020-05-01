@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     fn do_adc_binary(&mut self, value: u8) {
         let temp_1 = (self.a as u16).wrapping_add(value as u16);
         let temp = if self.p.c { temp_1.wrapping_add(1) } else { temp_1 };
@@ -120,7 +120,7 @@ mod tests {
     fn test_adc(bcd: bool, a: u8, addend: u8, c: bool, 
                 expected_a: u8, expected_c: bool, expected_z: bool,
                 expected_v: bool, expected_n: bool) {
-        let mut cpu = MOS6502::new();
+        let mut cpu = M6502::new();
 
         cpu.p.d = bcd;
         cpu.p.c = c;

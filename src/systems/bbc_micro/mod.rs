@@ -1,11 +1,11 @@
-use crate::chips::{/*m6522, */m6845, mos6502, saa5050};
+use crate::chips::{m6502, /*m6522, */ m6845, saa5050};
 
 mod video_ula;
 
 pub struct BBCMicro {
     ram: [u8; 0x8000],
 
-    cpu: mos6502::MOS6502,
+    cpu: m6502::M6502,
 
     crtc: m6845::M6845,
 
@@ -29,7 +29,7 @@ impl BBCMicro {
 
         let ram = [0; 0x8000];
 
-        let cpu = mos6502::MOS6502::new_with_options(mos6502::MOS6502Options {
+        let cpu = m6502::M6502::new_with_options(m6502::M6502Options {
             bcd_enabled: true
         });
 

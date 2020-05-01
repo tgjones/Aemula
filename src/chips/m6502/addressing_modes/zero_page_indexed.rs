@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     pub(crate) fn addressing_mode_zero_page_indexed_cycle_0(&mut self) {
         self.set_address(self.pc);
         self.pc = self.pc.wrapping_add(1);

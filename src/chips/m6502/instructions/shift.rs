@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     fn asl_helper(&mut self, value: u8) -> u8 {
         self.p.c = (value & 0x80) == 0x80;
         self.p.set_zero_negative_flags((value as i32) << 1)

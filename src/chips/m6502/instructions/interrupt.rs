@@ -1,6 +1,6 @@
-use super::super::{BrkFlags, MOS6502};
+use super::super::{BrkFlags, M6502};
 
-impl MOS6502 {
+impl M6502 {
     pub(crate) fn brk_0(&mut self) {
         if !self.brk_flags.contains(BrkFlags::NMI | BrkFlags::IRQ) { 
             self.pc = self.pc.wrapping_add(1);

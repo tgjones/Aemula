@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     /// Read low byte of target address.
     pub(crate) fn jsr_0(&mut self) {
         self.set_address(self.pc);

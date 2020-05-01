@@ -18,7 +18,7 @@ bitflags! {
 }
 
 #[derive(PinAccessors)]
-pub struct MOS6502 {
+pub struct M6502 {
     //////////////////////////////////////////
     // Pins
     //////////////////////////////////////////
@@ -91,19 +91,19 @@ pub struct MOS6502 {
     bcd_enabled: bool,
 }
 
-pub struct MOS6502Options {
+pub struct M6502Options {
     pub bcd_enabled: bool,
 }
 
-impl MOS6502 {
+impl M6502 {
     pub fn new() -> Self {
-        let options = MOS6502Options {
+        let options = M6502Options {
             bcd_enabled: true,
         };
-        MOS6502::new_with_options(options)
+        M6502::new_with_options(options)
     }
 
-    pub fn new_with_options(options: MOS6502Options) -> Self {
+    pub fn new_with_options(options: M6502Options) -> Self {
         Self {
             address_lo: 0,
             address_hi: 0,
@@ -219,7 +219,7 @@ mod tests {
 
         let mut ram = [0; 0x4000];
 
-        let mut cpu = MOS6502::new();
+        let mut cpu = M6502::new();
 
         while cpu.pc.to_u16() != 0x45C2 {
             cpu.set_phi0(true);
@@ -253,7 +253,7 @@ mod tests {
         ram[0xFFFC] = 0x00;
         ram[0xFFFD] = 0x04;
 
-        let mut cpu = MOS6502::new();
+        let mut cpu = M6502::new();
 
         while cpu.pc.to_u16() != 0x3399 && cpu.pc.to_u16() != 0xD0FE {
             cpu.set_phi0(true);
@@ -286,10 +286,10 @@ mod tests {
         // APU and I/O registers - for the purposes of this test, treat them as RAM.
         let mut apu = [0; 0x18];
 
-        let options = MOS6502Options {
+        let options = M6502Options {
             bcd_enabled: false,
         };
-        let mut cpu = MOS6502::new_with_options(options);
+        let mut cpu = M6502::new_with_options(options);
 
         let test_log_path = env::temp_dir().join("nestest_aemula.log");
         let mut test_log_buffer = File::create(&test_log_path)?;
@@ -365,7 +365,7 @@ mod tests {
             }
         }
 
-        fn setup_test(filename: &String, ram: &mut [u8; 0x10000], cpu: &mut MOS6502) {
+        fn setup_test(filename: &String, ram: &mut [u8; 0x10000], cpu: &mut M6502) {
             // Reset RAM.
             for i in ram.iter_mut() {
                 *i = 0x00;
@@ -432,7 +432,7 @@ mod tests {
         let mut test_filename = " start".to_string();
 
         loop {
-            let mut cpu = MOS6502::new();
+            let mut cpu = M6502::new();
             setup_test(&test_filename, &mut ram, &mut cpu);
 
             loop {

@@ -1,6 +1,6 @@
-use super::super::MOS6502;
+use super::super::M6502;
 
-impl MOS6502 {
+impl M6502 {
     pub(crate) fn anc(&mut self) {
         self.a &= self.data;
         self.p.set_zero_negative_flags(self.a as i32);
