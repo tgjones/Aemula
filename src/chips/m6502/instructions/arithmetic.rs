@@ -7,7 +7,7 @@ impl M6502 {
         self.p.v = ((self.a as u16 ^ temp) & (value as u16 ^ temp) & 0x80) == 0x80;
         self.p.c = temp > 0xFF;
         self.a = temp as u8;
-        self.p.set_zero_negative_flags(self.a as i32);
+        self.p.set_zero_negative_flags(self.a);
     }
 
     fn do_adc_decimal(&mut self, value: u8) {
@@ -81,29 +81,29 @@ impl M6502 {
     }
 
     pub(crate) fn dec(&mut self) {
-        self.data = self.p.set_zero_negative_flags(self.ad.lo.wrapping_sub(1) as i32);
+        self.data = self.p.set_zero_negative_flags(self.ad.lo.wrapping_sub(1));
         self.rw = false;
     }
 
     pub(crate) fn dex(&mut self) {
-        self.x = self.p.set_zero_negative_flags(self.x as i32 - 1);
+        self.x = self.p.set_zero_negative_flags(self.x.wrapping_sub(1));
     }
 
     pub(crate) fn dey(&mut self) {
-        self.y = self.p.set_zero_negative_flags(self.y as i32 - 1);
+        self.y = self.p.set_zero_negative_flags(self.y.wrapping_sub(1));
     }
 
     pub(crate) fn inc(&mut self) {
-        self.data = self.p.set_zero_negative_flags(self.ad.lo.wrapping_add(1) as i32);
+        self.data = self.p.set_zero_negative_flags(self.ad.lo.wrapping_add(1));
         self.rw = false;
     }
 
     pub(crate) fn inx(&mut self) {
-        self.x = self.p.set_zero_negative_flags(self.x as i32 + 1);
+        self.x = self.p.set_zero_negative_flags(self.x.wrapping_add(1));
     }
 
     pub(crate) fn iny(&mut self) {
-        self.y = self.p.set_zero_negative_flags(self.y as i32 + 1);
+        self.y = self.p.set_zero_negative_flags(self.y.wrapping_add(1));
     }
 }
 

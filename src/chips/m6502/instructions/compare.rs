@@ -9,7 +9,7 @@ impl M6502 {
     }
 
     fn compare(&mut self, register: u8) {
-        self.p.set_zero_negative_flags(register as i32 - self.data as i32);
+        self.p.set_zero_negative_flags(register.wrapping_sub(self.data));
         self.p.c = register >= self.data;
     }
 

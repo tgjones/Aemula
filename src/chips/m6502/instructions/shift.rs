@@ -3,7 +3,7 @@ use super::super::M6502;
 impl M6502 {
     fn asl_helper(&mut self, value: u8) -> u8 {
         self.p.c = (value & 0x80) == 0x80;
-        self.p.set_zero_negative_flags((value as i32) << 1)
+        self.p.set_zero_negative_flags(value.wrapping_shl(1))
     }
 
     pub(crate) fn asl(&mut self) {
@@ -17,7 +17,7 @@ impl M6502 {
 
     fn lsr_helper(&mut self, value: u8) -> u8 {
         self.p.c = (value & 0x1) == 0x1;
-        self.p.set_zero_negative_flags((value as i32) >> 1)
+        self.p.set_zero_negative_flags(value.wrapping_shr(1))
     }
 
     pub(crate) fn lsr(&mut self) {
@@ -32,7 +32,7 @@ impl M6502 {
     fn rol_helper(&mut self, value: u8) -> u8 {
         let temp = if self.p.c { 1 } else { 0 };
         self.p.c = (value & 0x80) == 0x80;
-        self.p.set_zero_negative_flags(((value << 1) | temp) as i32)
+        self.p.set_zero_negative_flags((value << 1) | temp)
     }
 
     pub(crate) fn rol(&mut self) {
@@ -47,7 +47,7 @@ impl M6502 {
     fn ror_helper(&mut self, value: u8) -> u8 {
         let temp = (if self.p.c { 1 } else { 0 }) << 7;
         self.p.c = (value & 0x1) == 0x1;
-        self.p.set_zero_negative_flags(((value >> 1) | temp) as i32)
+        self.p.set_zero_negative_flags((value >> 1) | temp)
     }
 
     pub(crate) fn ror(&mut self) {

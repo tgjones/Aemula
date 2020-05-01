@@ -3,13 +3,13 @@ use super::super::M6502;
 impl M6502 {
     pub(crate) fn anc(&mut self) {
         self.a &= self.data;
-        self.p.set_zero_negative_flags(self.a as i32);
+        self.p.set_zero_negative_flags(self.a);
         self.p.c = self.a & 0x80 != 0;
     }
 
     pub(crate) fn ane(&mut self) {
         self.a = (self.a | 0xEE) & self.x & self.data;
-        self.p.set_zero_negative_flags(self.a as i32);
+        self.p.set_zero_negative_flags(self.a);
     }
 
     pub(crate) fn arr(&mut self) {
@@ -26,7 +26,7 @@ impl M6502 {
             }
 
             // Set zero and negative flags as normal.
-            self.p.set_zero_negative_flags(a as i32);
+            self.p.set_zero_negative_flags(a);
 
             // The V flag will be set if the bit 6 of the accumulator changed its state
             // between the AND and the ROR, cleared otherwise.
@@ -78,13 +78,13 @@ impl M6502 {
         self.a = self.data & self.sp;
         self.x = self.a;
         self.sp = self.a;
-        self.p.set_zero_negative_flags(self.a as i32);
+        self.p.set_zero_negative_flags(self.a);
     }
 
     pub(crate) fn lxa(&mut self) {
         self.a = (self.a | 0xEE) & self.data;
         self.x = self.a;
-        self.p.set_zero_negative_flags(self.a as i32);
+        self.p.set_zero_negative_flags(self.a);
     }
 
     pub(crate) fn rla(&mut self) {
@@ -101,7 +101,7 @@ impl M6502 {
         let (new_x, overflowed) = (self.a & self.x).overflowing_sub(self.data);
         self.x = new_x;
         self.p.c = !overflowed;
-        self.p.set_zero_negative_flags(self.x as i32);
+        self.p.set_zero_negative_flags(self.x);
     }
 
     pub(crate) fn sha(&mut self) {

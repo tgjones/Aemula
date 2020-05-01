@@ -39,13 +39,11 @@ impl StatusRegister {
         self.n = (value & 0x80) == 0x80;
     }
 
-    pub(crate) fn set_zero_negative_flags(&mut self, value: i32) -> u8 {
-        let clamped_value = value & 0xFF;
-    
-        self.z = clamped_value == 0;
-        self.n = (clamped_value & 0x80) == 0x80;
+    pub(crate) fn set_zero_negative_flags(&mut self, value: u8) -> u8 {
+        self.z = value == 0;
+        self.n = (value & 0x80) == 0x80;
 
-        clamped_value as u8
+        value
     }
 
     pub(crate) fn as_u8(&self, bit_4_set: bool) -> u8 {

@@ -29,7 +29,7 @@ impl M6502 {
     }
 
     pub(crate) fn pla_2(&mut self) {
-        self.a = self.p.set_zero_negative_flags(self.data as i32);
+        self.a = self.p.set_zero_negative_flags(self.data);
     }
 
     pub(crate) fn plp_0(&mut self) {
@@ -44,7 +44,7 @@ impl M6502 {
     }
 
     pub(crate) fn plp_2(&mut self) {
-        let temp = self.p.set_zero_negative_flags(self.data as i32);
+        let temp = self.p.set_zero_negative_flags(self.data);
         self.p.set_from_u8(temp);
     }
 }
