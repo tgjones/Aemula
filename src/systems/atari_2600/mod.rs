@@ -1,27 +1,22 @@
 mod cartridge;
 mod tia;
 
-use crate::chips::{m6502::{M6502, M6502Options}, m6532::M6532};
+use crate::chips::{m6507::M6507, m6532::M6532};
 use cartridge::Cartridge;
 use tia::TIA;
 
 pub struct Atari2600 {
-    cpu: M6502,
-    pia: M6532,
+    cpu: M6507,
+    riot: M6532,
     tia: TIA,
     cartridge: Option<cartridge::Cartridge>,
 }
 
 impl Atari2600 {
     pub fn new() -> Self {
-        let cpu_options = M6502Options {
-            bcd_enabled: true
-        };
-        let cpu = M6502::new_with_options(cpu_options);
-
         Self {
-            cpu,
-            pia: M6532::new(),
+            cpu: M6507::new(),
+            riot: M6532::new(),
             tia: TIA::new(),
             cartridge: None,
         }
@@ -36,11 +31,31 @@ impl Atari2600 {
     }
 
     pub fn reset(&mut self) {
-        //self.cpu.reset();
+        self.cpu.set_pin_res(false);
+        self.cpu.set_pin_res(true);
     }
 
     pub fn tick(&mut self) {
+        self.tia.set_pin_osc(true);
 
+        self.do_cpu_cycle();
+
+        self.tia.set_pin_osc(false);
+
+        self.do_cpu_cycle();
+    }
+
+    fn do_cpu_cycle(&mut self) {
+        self.cpu.set_pin_rdy(self.tia.pin_rdy());
+
+        // TODO: Check whether phi0 has actually changed.
+        // It will only change once per three calls to set_osc.
+        self.cpu.set_pin_phi0(self.tia.pin_phi0());
+
+        let address = self.cpu.pin_address();
+
+        // TODO
+        //self.riot.set_rs();
     }
 }
 

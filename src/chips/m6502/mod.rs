@@ -29,14 +29,18 @@ pub struct M6502 {
     #[pin(bidirectional)]
     data: u8,
 
-    pub rdy: bool,
+    #[pin(in)]
+    rdy: bool,
+
     pub irq: bool,
     pub nmi: bool,
 
     #[pin(out)]
     sync: bool,
 
-    pub res: bool,
+    #[pin(in)]
+    #[handle(always)]
+    res: bool,
 
     #[pin(in)]
     #[handle(transition_lo_to_hi, transition_hi_to_lo)]
@@ -108,7 +112,7 @@ impl M6502 {
             address_lo: 0,
             address_hi: 0,
             data: 0,
-            rdy: false,
+            rdy: true,
             irq: false,
             nmi: false,
             sync: true,
@@ -152,14 +156,19 @@ impl M6502 {
         self.sync = true;
     }
 
+    fn on_res_set(&mut self) {
+        if !self.res {
+            self.sync = true;
+            self.brk_flags = BrkFlags::RESET;
+        }
+    }
+
     // How this is actually supposed to work is:
     // - PHI1 is when address lines change.
     // - PHI2 is when the data is transferred.
 
     fn on_phi0_transition_lo_to_hi(&mut self) {
         // TODO: Write to the data bus.
-
-
 
         self.phi2 = self.phi0;
         self.phi1 = !self.phi0;
@@ -171,33 +180,32 @@ impl M6502 {
         // TODO: Set RW pin.
         // TODO: Set SYNC pin for an opcode fetch.
 
-        // If SYNC pin is set, this is the start of a new instruction.
-        // We will have the new opcode in the DATA pins.
-        if self.sync {
-            self.ir = self.data;
-            self.tr = 0;
-            self.sync = false;
+        // A low RDY pin, combined with a read cycle, pauses the CPU.
+        if self.rdy || !self.rw {
+            // If SYNC pin is set, this is the start of a new instruction.
+            // We will have the new opcode in the DATA pins.
+            if self.sync {
+                self.ir = self.data;
+                self.tr = 0;
+                self.sync = false;
 
-            if self.res {
-                self.brk_flags = BrkFlags::RESET;
+                if self.brk_flags != BrkFlags::NONE {
+                    self.ir = 0;
+                    self.res = false;
+                } else {
+                    self.pc = self.pc.wrapping_add(1);
+                }
             }
 
-            if self.brk_flags != BrkFlags::NONE {
-                self.ir = 0;
-                self.res = false;
-            } else {
-                self.pc = self.pc.wrapping_add(1);
-            }
+            // Assume we're going to read.
+            self.rw = true;
+
+            // Include generated file with actual instruction implementations.
+            include!(concat!(env!("OUT_DIR"), "/mos6502_instructions.generated.rs"));
+
+            // Increment timing register.
+            self.tr += 1;
         }
-
-        // Assume we're going to read.
-        self.rw = true;
-
-        // Include generated file with actual instruction implementations.
-        include!(concat!(env!("OUT_DIR"), "/mos6502_instructions.generated.rs"));
-
-        // Increment timing register.
-        self.tr += 1;
 
         self.phi2 = self.phi0;
         self.phi1 = !self.phi0;
@@ -220,6 +228,9 @@ mod tests {
         let mut ram = [0; 0x4000];
 
         let mut cpu = M6502::new();
+
+        cpu.set_res(false);
+        cpu.set_res(true);
 
         while cpu.pc.to_u16() != 0x45C2 {
             cpu.set_phi0(true);
@@ -254,6 +265,9 @@ mod tests {
         ram[0xFFFD] = 0x04;
 
         let mut cpu = M6502::new();
+
+        cpu.set_res(false);
+        cpu.set_res(true);
 
         while cpu.pc.to_u16() != 0x3399 && cpu.pc.to_u16() != 0xD0FE {
             cpu.set_phi0(true);
@@ -290,6 +304,9 @@ mod tests {
             bcd_enabled: false,
         };
         let mut cpu = M6502::new_with_options(options);
+
+        cpu.set_res(false);
+        cpu.set_res(true);
 
         let test_log_path = env::temp_dir().join("nestest_aemula.log");
         let mut test_log_buffer = File::create(&test_log_path)?;
@@ -366,6 +383,9 @@ mod tests {
         }
 
         fn setup_test(filename: &String, ram: &mut [u8; 0x10000], cpu: &mut M6502) {
+            cpu.set_res(false);
+            cpu.set_res(true);
+
             // Reset RAM.
             for i in ram.iter_mut() {
                 *i = 0x00;
