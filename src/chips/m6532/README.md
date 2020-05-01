@@ -6,7 +6,8 @@
 
 * [MOS 6532 Datasheet (1981)](http://archive.6502.org/datasheets/mos_6532_riot.pdf)
 * [MOS 6532 Datasheet (Preliminary, 1977)](http://archive.6502.org/datasheets/mos_6532_riot_preliminary_feb_1977.pdf)
-* [Rockwell 6532 Datasheet](http://www.ionpool.net/arcade/gottlieb/technical/datasheets/R6532_datasheet.pdf)
+* [Rockwell 6532 Datasheet (1987)](http://www.ionpool.net/arcade/gottlieb/technical/datasheets/R6532_datasheet.pdf)
+* [Rockwell 6532 Datasheet (1981)](http://retro.hansotten.nl//uploads/6502/6532riot.pdf)
 
 ## Other implementations
 
