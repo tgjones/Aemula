@@ -3,3 +3,5 @@ extern crate bitflags;
 
 pub mod chips;
 pub mod systems;
+
+mod util;

@@ -51,11 +51,11 @@ pub struct M6532 {
     #[handle(transition_lo_to_hi, transition_hi_to_lo)]
     phi2: bool,
 
-    /// Chip Select 1 Pin
+    /// Chip Select 1 Pin. Must be high to enable chip.
     #[pin(in)]
     cs1: bool,
 
-    /// Chip Select 2 Pin
+    /// Chip Select 2 Pin. Must be low to enable chip.
     #[pin(in)]
     cs2: bool,
 
@@ -122,6 +122,11 @@ impl M6532 {
         }
     }
 
+    pub fn is_selected(&self) -> bool {
+        // To access chip, CS1 must be high and CS2 must be low.
+        self.cs1 && !self.cs2
+    }
+
     fn on_res_set(&mut self) {
         self.ddra = 0;
         self.ddrb = 0;
@@ -140,7 +145,7 @@ impl M6532 {
         self.irq = (self.irq_state & self.irq_enabled) == 0;
 
         // To access chip, CS1 must be high and CS2 must be low.
-        if self.cs1 && !self.cs2 {
+        if self.is_selected() {
             if self.rs {
                 // Access I/O registers or interval timer.
                 if (self.a & 0x4) != 0 { // Check A2 pin
