@@ -1,16 +1,27 @@
-mod cartridge;
+pub mod cartridge;
 mod tia;
+mod palette;
 
 use crate::util::Bit;
 use crate::chips::{m6507::M6507, m6532::M6532};
 use cartridge::Cartridge;
 use tia::TIA;
 
+pub const WIDTH: usize = 160;
+pub const HEIGHT: usize = 192;
+
 pub struct Atari2600 {
     cpu: M6507,
     riot: M6532,
-    tia: TIA,
+    tia: TIA, 
     cartridge: Option<Box<dyn cartridge::Cartridge>>,
+
+    pub video_data: Vec<u32>,
+
+    // TODO: Move these to somewhere better.
+    sync_counter: usize,
+    current_scanline: usize,
+    current_pos: usize,
 }
 
 impl Atari2600 {
@@ -20,6 +31,12 @@ impl Atari2600 {
             riot: M6532::new(),
             tia: TIA::new(),
             cartridge: None,
+
+            video_data: vec![0; WIDTH * HEIGHT],
+
+            sync_counter: 0,
+            current_scanline: 0,
+            current_pos: 0,
         }
     }
 
@@ -44,9 +61,14 @@ impl Atari2600 {
         self.tia.set_pin_osc(false);
 
         self.do_cpu_cycle();
+
+        self.do_tv_output();
     }
 
     fn do_cpu_cycle(&mut self) {
+        // TODO: Optimise this. If PHI0 didn't chance during last OSC edge,
+        // then nothing else relevant to a CPU tick will have changed either.
+
         self.cpu.set_pin_rdy(self.tia.pin_rdy());
         self.cpu.set_pin_phi0(self.tia.pin_phi0());
 
@@ -83,7 +105,7 @@ impl Atari2600 {
             // If a cartridge is plugged in, always give it a chance to provide data.
             if let Some(c) = &mut self.cartridge {
                 c.set_pin_d(self.cpu.pin_data());
-                c.set_pin_a(self.cpu.pin_address());
+                c.set_pin_a(self.cpu.pin_address() & 0x1FFF);
                 self.cpu.set_pin_data(c.pin_d());
             }
         } else {
@@ -96,6 +118,37 @@ impl Atari2600 {
                 self.riot.set_db(self.cpu.pin_data());
             }
             // TODO: Write to cartridge?
+        }
+    }
+
+    // Based on https://github.com/SavourySnaX/EDL/blob/a6a19f9db0a939230458d36bfe2715466cfad5d2/examples/2600/2600.c#L824
+    // TODO: Figure this out.
+    fn do_tv_output(&mut self) {
+        if self.tia.pin_sync() {
+            self.sync_counter += 1;
+        } else {
+            if self.sync_counter > 0 {
+                if self.sync_counter < 300 {
+                    // Assume HSYNC has just finished.
+                    self.current_scanline += 1;
+                    self.current_pos = 0;
+                } else {
+                    // Assume VSYNC has just finished.
+                    self.current_scanline = 0;
+                    self.current_pos = 0;
+                    // TODO: Output framebuffer to screen.
+                }
+            }
+            self.sync_counter = 0;
+
+            if self.current_scanline > 37 
+                && self.current_scanline < 37 + 192
+                && self.current_pos < 228 {
+                //let palette_index = self.tia.pin_lum() | self.tia.pin_col() << 3;
+                let palette_index = 10;
+                let color = palette::NTSC_PALETTE[palette_index as usize];
+                self.video_data[self.current_scanline * WIDTH + self.current_pos] = color;
+            }
         }
     }
 }

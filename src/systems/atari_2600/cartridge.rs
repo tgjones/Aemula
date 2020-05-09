@@ -43,7 +43,7 @@ impl Cartridge2K {
 
     fn on_pin_a_change(&mut self) {
         if self.pin_a.bit(12) {
-            self.pin_d = self.rom_data[self.pin_a as usize];
+            self.pin_d = self.rom_data[(self.pin_a & 0x7FF) as usize];
         }
     }
 }
@@ -88,7 +88,7 @@ impl Cartridge4K {
 
     fn on_pin_a_change(&mut self) {
         if self.pin_a.bit(12) {
-            self.pin_d = self.rom_data[self.pin_a as usize];
+            self.pin_d = self.rom_data[(self.pin_a & 0xFFF) as usize];
         }
     }
 }

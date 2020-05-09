@@ -7,11 +7,7 @@ edition = "2018"
 [dependencies]
 aemula_macros = { path = "macros" }
 bitflags = "1.2.1"
-clipboard = "0.5"
-glium = "0.26"
-imgui = "0.3"
-imgui-glium-renderer = "0.3"
-imgui-winit-support = "0.3"
+minifb = "0.16"
 
 [dev-dependencies]
 file_diff = "1.0.0"

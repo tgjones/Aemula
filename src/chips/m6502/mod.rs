@@ -206,7 +206,7 @@ impl M6502 {
             // Increment timing register.
             self.tr += 1;
         }
-
+        
         self.phi2 = self.phi0;
         self.phi1 = !self.phi0;
     }
