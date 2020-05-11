@@ -99,10 +99,21 @@ pub struct TIA {
     /// Clock divider. Divides the input OSC clock by 4.
     clock_divide_by_4: u8,
 
-    horizontal_counter: u8,
-
     vsync: bool,
     vblank: bool,
+
+    horizontal_counter: u8,
+    horizontal_reset: bool,
+    horizontal_blank: bool,
+
+    /// Controls whether latches I4..I5 are enabled.
+    i45_enable: bool,
+
+    /// Controls whether latches I0..I3 are dumped to ground.
+    i03_dump_to_ground: bool,
+
+    /// Stores combined values of PF0, PF1, PF2 registers.
+    playfield: u32,
 }
 
 impl TIA {
@@ -131,10 +142,18 @@ impl TIA {
 
             phi0_clock_counter: 0,
             clock_divide_by_4: 0,
-            horizontal_counter: 0,
 
             vsync: false,
             vblank: false,
+
+            horizontal_counter: 0,
+            horizontal_reset: false,
+            horizontal_blank: false,
+
+            i45_enable: false,
+            i03_dump_to_ground: false,
+
+            playfield: 0,
         }
     }
 
@@ -157,7 +176,10 @@ impl TIA {
 
             TIA::update_polynomial_counter(&mut self.horizontal_counter);
             
-            if self.horizontal_counter == 0b111111 {
+            if self.horizontal_counter == 0b111111 || self.horizontal_reset {
+                self.horizontal_reset = false;
+                self.horizontal_counter = 0;
+                self.horizontal_blank = true;
                 self.pin_rdy = true;
             }
         }
@@ -216,13 +238,19 @@ impl TIA {
                     0x00 => self.vsync = self.pin_d_05.bit(1),
 
                     // VBLANK - Vertical blank set/clear
-                    0x01 => self.vblank = self.pin_d_05.bit(1),
+                    0x01 => {
+                        self.vblank = self.pin_d_05.bit(1);
+                        self.pin_blk = self.vblank;
+                        self.i45_enable = self.pin_d_67.bit(0);
+                        self.i03_dump_to_ground = self.pin_d_67.bit(1);
+                    }
 
-                    // WSYNC - Wait for leading edge of horizontal blank
+                    // WSYNC - Wait for sync. Halts microprocessor by clearing RDY latch to zero.
+                    // RDY is set to true again by leading edge of horizontal blank.
                     0x02 => self.pin_rdy = false,
 
-                    // RSYNC - Reset horizontal sync counter
-                    0x03 => {},// self.pin_rdy = false,
+                    // RSYNC - Reset horizontal sync counter.
+                    0x03 => self.horizontal_reset = true,
 
                     // NUSIZ0 - Number-size player-missile 0
                     0x04 => {},
@@ -252,13 +280,22 @@ impl TIA {
                     0x0C => {},
 
                     // PF0 - Playfield register byte 0
-                    0x0D => {},
+                    0x0D => {
+                        let temp = ((self.pin_d_05 >> 4) | (self.pin_d_67 << 2)) as u32;
+                        self.playfield = (temp << 16) | (self.playfield & 0xFFFF);
+                    }
 
                     // PF1 - Playfield register byte 1
-                    0x0E => {},
+                    0x0E => {
+                        let temp = (self.pin_d_05 | (self.pin_d_67 << 6)) as u32;
+                        self.playfield = (self.playfield & 0xF0000) | (temp << 8) | (self.playfield & 0xFF);
+                    },
 
                     // PF2 - Playfield register byte 2
-                    0x0F => {},
+                    0x0F => {
+                        let temp = (self.pin_d_05 | (self.pin_d_67 << 6)) as u32;
+                        self.playfield = (self.playfield & 0xFFF00) | temp;
+                    }
 
                     // RESP0 - Reset player 0
                     0x10 => {},
